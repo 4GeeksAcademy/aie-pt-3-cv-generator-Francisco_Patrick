@@ -24,13 +24,23 @@ let portraitParticles = [];
 let transitionRunning = false;
 let transitionLayer = null;
 let resizeDebounceId = null;
+let portraitImagePromise = null;
+let lastPortraitSignature = '';
 
+/**
+ * Espera al siguiente frame de render para repartir trabajo pesado entre repintados.
+ * @returns {Promise<void>}
+ */
 function waitForFrame() {
   return new Promise((resolve) => {
     window.requestAnimationFrame(() => resolve());
   });
 }
 
+/**
+ * Crea una capa temporal única para animar las partículas durante la transición.
+ * @returns {HTMLDivElement}
+ */
 function ensureTransitionLayer() {
   if (transitionLayer) {
     return transitionLayer;
@@ -42,6 +52,10 @@ function ensureTransitionLayer() {
   return transitionLayer;
 }
 
+/**
+ * Oculta el loader inicial una vez que la app ya puede mostrarse.
+ * @returns {void}
+ */
 function hideStartupLoader() {
   document.body.classList.remove('app-loading');
 
@@ -55,10 +69,20 @@ function hideStartupLoader() {
   }, 340);
 }
 
+/**
+ * Normaliza texto del CV para reutilizarlo como fuente de caracteres.
+ * @param {unknown} value
+ * @returns {string}
+ */
 function normalizeText(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Reúne un pool de caracteres a partir del contenido del CV.
+ * @param {Record<string, any>} data
+ * @returns {string}
+ */
 function collectCvCharacters(data) {
   const chunks = [];
   chunks.push(normalizeText(data.personalInformation?.name));
@@ -74,6 +98,11 @@ function collectCvCharacters(data) {
   return charPool;
 }
 
+/**
+ * Escapa texto para insertarlo con seguridad en el HTML generado.
+ * @param {unknown} text
+ * @returns {string}
+ */
 function escapeHtml(text) {
   return String(text)
     .replaceAll('&', '&amp;')
@@ -83,6 +112,11 @@ function escapeHtml(text) {
     .replaceAll("'", '&#039;');
 }
 
+/**
+ * Renderiza el bloque de skills técnicas agrupadas.
+ * @param {Record<string, string[]>} technicalSkills
+ * @returns {string}
+ */
 function renderSkillsGrid(technicalSkills) {
   const entries = Object.entries(technicalSkills || {});
   if (!entries.length) {
@@ -106,6 +140,11 @@ function renderSkillsGrid(technicalSkills) {
     .join('');
 }
 
+/**
+ * Inserta en el DOM todas las secciones del curriculum usando cv.json como fuente.
+ * @param {Record<string, any>} data
+ * @returns {void}
+ */
 function renderCv(data) {
   const personal = data.personalInformation || {};
   const experience = data.experience || [];
@@ -118,8 +157,18 @@ function renderCv(data) {
     <section id="personal" class="mb-7 rounded-2xl border border-slate-700/80 bg-slate-900/60 p-5 sm:p-7">
       <div class="grid gap-4 md:grid-cols-[2fr,1fr]">
         <div>
-          <h2 class="text-2xl font-bold text-white sm:text-3xl">${escapeHtml(personal.name || 'Nombre no disponible')}</h2>
-          <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300 sm:text-base">${escapeHtml(personal.summary || '')}</p>
+          <div class="flex items-center gap-4">
+            <img
+              src="image/portrait_photo.png"
+              alt="Foto de perfil de ${escapeHtml(personal.name || 'la persona candidata')}"
+              class="h-20 w-20 rounded-2xl border border-cyan-300/30 object-cover shadow-lg shadow-cyan-950/30 sm:h-32 sm:w-32"
+            />
+            <div>
+              <h2 class="text-2xl font-bold text-white sm:text-3xl">${escapeHtml(personal.name || 'Nombre no disponible')}</h2>
+              <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300 sm:text-base">${escapeHtml(personal.summary || '')}</p>
+            </div>
+          </div>
+          
         </div>
         <address class="not-italic text-sm text-slate-200">
           <ul class="space-y-2">
@@ -212,6 +261,11 @@ function renderCv(data) {
   `;
 }
 
+/**
+ * Actualiza el bloque JSON-LD con la información estructurada del perfil.
+ * @param {Record<string, any>} data
+ * @returns {void}
+ */
 function setSchemaOrg(data) {
   const personal = data.personalInformation || {};
   const skills = Object.values(data.technicalSkills || {}).flat();
@@ -231,6 +285,12 @@ function setSchemaOrg(data) {
   schemaScript.textContent = JSON.stringify(schema, null, 2);
 }
 
+/**
+ * Extrae posiciones objetivo carácter por carácter del CV ya renderizado.
+ * @param {HTMLElement} rootElement
+ * @param {number} [maxChars=1800]
+ * @returns {Array<{x: number, y: number, char: string, weight: string, size: number}>}
+ */
 function getCharTargets(rootElement, maxChars = 1800) {
   const targets = [];
   const walker = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT);
@@ -266,23 +326,65 @@ function getCharTargets(rootElement, maxChars = 1800) {
   return targets;
 }
 
+/**
+ * Aplica coordenadas a una partícula mediante variables CSS y transformaciones GPU-friendly.
+ * @param {HTMLElement} node
+ * @param {number} x
+ * @param {number} y
+ * @returns {void}
+ */
 function updateParticlePosition(node, x, y) {
   node.style.setProperty('--x', `${x}px`);
   node.style.setProperty('--y', `${y}px`);
   node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
 }
 
-async function buildAsciiPortrait(imageSrc, charPool) {
-  const image = new Image();
-  image.decoding = 'async';
-  image.src = imageSrc;
+/**
+ * Carga y reutiliza la imagen base del retrato para evitar descargas y decodificaciones repetidas.
+ * @param {string} imageSrc
+ * @returns {Promise<HTMLImageElement>}
+ */
+function loadPortraitImage(imageSrc) {
+  if (portraitImagePromise) {
+    return portraitImagePromise;
+  }
 
-  await new Promise((resolve, reject) => {
-    image.onload = resolve;
+  portraitImagePromise = new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => resolve(image);
     image.onerror = reject;
+    image.src = imageSrc;
   });
 
+  return portraitImagePromise;
+}
+
+/**
+ * Genera una firma del tamaño actual del retrato para evitar reconstrucciones idénticas.
+ * @param {DOMRect} stageRect
+ * @returns {string}
+ */
+function getPortraitSignature(stageRect) {
+  return `${Math.floor(stageRect.width)}x${Math.floor(stageRect.height)}`;
+}
+
+/**
+ * Construye el retrato ASCII a partir de la imagen de referencia y un pool de caracteres del CV.
+ * @param {string} imageSrc
+ * @param {string} charPool
+ * @returns {Promise<void>}
+ */
+async function buildAsciiPortrait(imageSrc, charPool) {
+  const image = await loadPortraitImage(imageSrc);
+
   const stageRect = portraitContainer.getBoundingClientRect();
+  const portraitSignature = getPortraitSignature(stageRect);
+
+  if (portraitSignature === lastPortraitSignature && portraitParticles.length) {
+    return;
+  }
+
   const targetWidth = Math.max(240, Math.floor(stageRect.width));
   const targetHeight = Math.max(280, Math.floor(stageRect.height));
 
@@ -300,8 +402,8 @@ async function buildAsciiPortrait(imageSrc, charPool) {
   context.clearRect(0, 0, targetWidth, targetHeight);
   context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
 
-  const sampleStep = window.innerWidth < 640 ? 7 : 6;
-  const maxParticles = Number.POSITIVE_INFINITY;
+  const sampleStep = window.innerWidth < 640 ? 10 : 9;
+  const maxParticles = Math.max(320, Math.floor((targetWidth * targetHeight) / (sampleStep * sampleStep * 1.8)));
   const pixels = context.getImageData(0, 0, targetWidth, targetHeight).data;
   portraitContainer.innerHTML = '';
 
@@ -329,7 +431,7 @@ async function buildAsciiPortrait(imageSrc, charPool) {
       const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
       const contrast = (255 - luminance) / 255;
 
-      if (contrast < 0.08) {
+      if (contrast < 0.14) {
         continue;
       }
 
@@ -369,8 +471,13 @@ async function buildAsciiPortrait(imageSrc, charPool) {
 
   portraitContainer.appendChild(fragment);
   portraitParticles = particles;
+  lastPortraitSignature = portraitSignature;
 }
 
+/**
+ * Clona las partículas del retrato para animarlas hacia el contenido del CV.
+ * @returns {Array<{node: HTMLElement, startX: number, startY: number}>}
+ */
 function createMovingParticles() {
   const layer = ensureTransitionLayer();
   layer.innerHTML = '';
@@ -396,6 +503,10 @@ function createMovingParticles() {
   return movingParticles;
 }
 
+/**
+ * Anima la transformación del retrato ASCII en el contenido del curriculum.
+ * @returns {Promise<void>}
+ */
 async function animateToCurriculum() {
   if (transitionRunning) {
     return;
@@ -458,6 +569,11 @@ async function animateToCurriculum() {
   }, TIMING.finishMs);
 }
 
+/**
+ * Construye un resumen lineal del CV para enriquecer el pool de caracteres del retrato.
+ * @param {Record<string, any>} data
+ * @returns {string}
+ */
 function buildCvTextSummary(data) {
   const personal = data.personalInformation || {};
   const experience = (data.experience || [])
@@ -471,6 +587,10 @@ function buildCvTextSummary(data) {
   return normalizeText(`${personal.name || ''} ${personal.summary || ''} ${experience} ${courses} ${tech} ${soft} ${langs}`);
 }
 
+/**
+ * Inicializa la carga de datos, el render del CV y el retrato ASCII inicial.
+ * @returns {Promise<void>}
+ */
 async function init() {
   try {
     const response = await fetch('cv.json', { cache: 'no-store' });
@@ -497,8 +617,13 @@ async function init() {
   }
 }
 
+/**
+ * Regenera el retrato cuando cambia el tamaño de la vista, con debounce para evitar trabajo excesivo.
+ * @returns {void}
+ */
 window.addEventListener('resize', () => {
   window.clearTimeout(resizeDebounceId);
+  lastPortraitSignature = '';
   resizeDebounceId = window.setTimeout(() => {
     if (!transitionRunning && cvData) {
       const charPool = collectCvCharacters(cvData) + buildCvTextSummary(cvData);
@@ -507,6 +632,10 @@ window.addEventListener('resize', () => {
   }, 220);
 });
 
+/**
+ * Limpia la capa temporal antes de abandonar la página.
+ * @returns {void}
+ */
 window.addEventListener('beforeunload', () => {
   if (transitionLayer) {
     transitionLayer.remove();
