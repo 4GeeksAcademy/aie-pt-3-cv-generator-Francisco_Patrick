@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Curriculum dinámico construido desde un retrato ASCII.">
+  <title>CV | Francisco Patrick</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="app-loading min-h-screen bg-slate-950 text-slate-100 antialiased">
+  <div id="startup-loader" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950" aria-live="polite" aria-label="Cargando retrato inicial">
+    <div class="flex flex-col items-center gap-4">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p class="text-xs tracking-[0.2em] text-cyan-300">CARGANDO RETRATO</p>
+    </div>
+  </div>
+
+  <header id="main-header" class="header-hidden sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <p class="text-sm font-medium tracking-[0.18em] text-cyan-300">CURRICULUM VITAE</p>
+      <nav aria-label="Navegación principal" class="hidden md:block">
+        <ul class="flex gap-5 text-sm text-slate-300">
+          <li><a href="#personal" class="hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded">Personal</a></li>
+          <li><a href="#experience" class="hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded">Experiencia</a></li>
+          <li><a href="#courses" class="hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded">Cursos</a></li>
+          <li><a href="#skills" class="hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded">Skills</a></li>
+          <li><a href="#languages" class="hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded">Idiomas</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+    <section id="landing" aria-labelledby="landing-title" class="flex min-h-[70vh] flex-col items-center justify-center gap-7">
+      <div class="relative w-full max-w-4xl sm:max-w-5xl">
+        <div id="ascii-portrait" role="img" aria-label="Retrato ASCII de Francisco Patrick" class="ascii-stage relative mx-auto h-[30rem] w-full max-w-[30rem] sm:h-[34rem] sm:max-w-[34rem]"></div>
+      </div>
+
+      <button
+        id="build-cv-btn"
+        type="button"
+        aria-label="Construir curriculum desde retrato"
+        class="rounded-full border border-cyan-300/70 bg-cyan-400/10 px-7 py-3 font-['Space_Grotesk'] text-sm font-semibold tracking-wide text-cyan-100 transition hover:-translate-y-0.5 hover:bg-cyan-300/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+      >
+        Construir curriculum
+      </button>
+    </section>
+
+    <section id="cv-content" aria-live="polite" class="pointer-events-none opacity-0 transition-opacity duration-700"></section>
+  </main>
+
+  <footer class="border-t border-slate-800 py-6">
+    <p class="mx-auto w-full max-w-6xl px-4 text-xs text-slate-400 sm:px-6 lg:px-8">CV dinámico generado desde datos estructurados.</p>
+  </footer>
+
+  <script type="application/ld+json" id="schema-person"></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

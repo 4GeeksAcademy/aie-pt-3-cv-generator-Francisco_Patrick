@@ -1,0 +1,110 @@
+{
+  "personalInformation": {
+    "name": "Francisco Patrick Jiménez Stegmann",
+    "email": "pjstegmann@outlook.es",
+    "phone": "+34664827238",
+    "website": "https://patrickjs.vercel.app",
+    "linkedin": "https://www.linkedin.com/in/patrick-j-stegmann/",
+    "summary": "Desarrollador Full Stack con experiencia en Node.js, TypeScript, React, React Native, NestJS, MongoDB y Java. Resolutivo, flexible y resiliente, con capacidad para resolver problemas complejos mediante ingeniería inversa y adaptación rápida a nuevos entornos.",
+    "photo": "/images/profile.jpg"
+  },
+
+  "experience": [
+    {
+      "company": "Autónomo",
+      "position": "Desarrollador Full Stack",
+      "startYear": 2024,
+      "highlights": [
+        "Desarrollo de aplicaciones web con Node.js, Express, React.js y MongoDB",
+        "Configuración y administración de servidores Debian",
+        "Mantenimiento de sitios WordPress",
+        "Servicios de desarrollo en SAP, Java, JavaScript, TypeScript, MySQL y MongoDB"
+      ]
+    },
+    {
+      "company": "Kopoku Team",
+      "position": "Desarrollador Full Stack",
+      "startYear": 2022,
+      "duration": "1 año y 8 meses",
+      "highlights": [
+        "Desarrollo y mantenimiento de sistemas multijugador sobre RageMP",
+        "Uso de JavaScript, Node.js, React y MongoDB"
+      ]
+    }
+  ],
+
+  "courses": [
+    {
+      "name": "JavaScript Moderno",
+      "provider": "Udemy",
+      "hours": 52
+    },
+    {
+      "name": "Java",
+      "provider": "Accenture",
+      "hours": 460
+    },
+    {
+      "name": "Ingeniería con IA",
+      "provider": "4Geeks Academy",
+      "status": "En curso"
+    }
+  ],
+
+  "technicalSkills": {
+    "backend": [
+      "Node.js",
+      "Express",
+      "NestJS",
+      "TypeScript",
+      "JavaScript",
+      "Java EE",
+      "Hibernate",
+      "Spring"
+    ],
+    "frontend": [
+      "React",
+      "React Native"
+    ],
+    "databases": [
+      "MongoDB",
+      "MySQL",
+      "PostgreSQL"
+    ],
+    "devops": [
+      "Nginx",
+      "Debian"
+    ],
+    "versionControl": [
+      "Git",
+      "GitHub"
+    ]
+  },
+
+  "softSkills": [
+    "Pensamiento analítico muy sólido",
+    "Resolución de problemas estructurada",
+    "Aprendizaje autónomo rápido",
+    "Fiabilidad en equipos",
+    "Estabilidad bajo presión"
+  ],
+
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Profesional"
+    },
+    {
+      "language": "Danés",
+      "level": "Intermedio"
+    },
+    {
+      "language": "Italiano",
+      "level": "Intermedio"
+    }
+  ]
+}

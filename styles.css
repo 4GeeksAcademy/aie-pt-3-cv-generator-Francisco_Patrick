@@ -1,0 +1,105 @@
+:root {
+  --mono-font: 'IBM Plex Mono', monospace;
+  --display-font: 'Space Grotesk', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--display-font);
+}
+
+.header-hidden {
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+}
+
+#main-header {
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+body.app-loading header,
+body.app-loading main,
+body.app-loading footer {
+  visibility: hidden;
+}
+
+#startup-loader {
+  opacity: 1;
+  transition: opacity 320ms ease;
+}
+
+#startup-loader.is-hidden {
+  opacity: 0;
+}
+
+.loading-spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  border: 3px solid rgb(125 211 252 / 0.25);
+  border-top-color: rgb(125 211 252 / 0.95);
+  animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ascii-stage {
+  isolation: isolate;
+}
+
+.ascii-particle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate3d(0, 0, 0);
+  font-family: var(--mono-font);
+  line-height: 1;
+  color: rgb(186 230 253 / 0.85);
+  user-select: none;
+}
+
+.ascii-particle.is-moving {
+  will-change: transform, opacity, color, font-size, font-weight;
+}
+
+.ascii-transition-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  overflow: hidden;
+}
+
+.ascii-particle.is-floating {
+  animation: floaty 4s ease-in-out infinite;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translate3d(var(--x, 0), var(--y, 0), 0);
+  }
+  50% {
+    transform: translate3d(var(--x, 0), calc(var(--y, 0) - 2px), 0);
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
